@@ -28,14 +28,14 @@ import time
 #
 # CONFIGURE BLOCK
 
-DEFAULTCONFIG = {  # list all allowed app ids to store. Empty = allow all
-                   'ALLOWED_APP_IDS': [4920],  # list all allowed mod ids to store. Empty = allow all
-                   'ALLOWED_MOD_IDS': [],  # what port to listen to
-                   'PORT': 27020,  # number of downloads from steam we will have at the same time
-                   'MAX_OUTSTANDING_STEAM_DOWNLOAD_REQUESTS': 4,
-                   # How old the latest version must be before we remove older version (1 week in seconds)
-                   'VERSION_OVERLAP_WINDOW': 7 * 24 * 3600,  # turn on trace logging
-                   'LOG': True
+DEFAULTCONFIG = {  
+                   'ALLOWED_APP_IDS': [4920],  # list all allowed app ids to store. Empty = allow all
+                   'ALLOWED_MOD_IDS': [],  # list all allowed mod ids to store. Empty = allow all
+                   'INTERFACE': '0.0.0.0',  # interface to listen on. 0.0.0.0 = all
+                   'PORT': 27020,  # what port to listen to
+                   'MAX_OUTSTANDING_STEAM_DOWNLOAD_REQUESTS': 4, # number of downloads from steam we will have at the same time
+                   'VERSION_OVERLAP_WINDOW': 7 * 24 * 3600,  # How old the latest version must be before we remove older version (1 week in seconds)
+                   'LOG': True # turn on trace logging
 }
 
 CONFIG = {}
@@ -489,9 +489,10 @@ class RequestHandler(SimpleHTTPRequestHandler):
         result = check_path(self.path)
         if result:
             mod_id, version = result
-            if CONFIG['ALLOWED_MOD_IDS'] and not (mod_id in CONFIG['ALLOWED_MOD_IDS']):
-                log("Reject request for m%x_%d, mod not allowed" % (mod_id, version))
-                self.send_error(404, Server.RESULT_DENIED_MOD_ID)
+            str_mod_id = str(hex(mod_id))[2:]
+            if CONFIG['ALLOWED_MOD_IDS'] and not (str_mod_id in CONFIG['ALLOWED_MOD_IDS']):
+                log("Reject request for m%s_%d, mod %s not allowed" % (str_mod_id, version, str_mod_id))
+                self.send_error(403, Server.RESULT_DENIED_MOD_ID)
                 return False
             # list all versions of the mod using the filesystem
             expr = "m%x_*.zip" % mod_id
@@ -519,6 +520,12 @@ class RequestHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.pre_check():
             SimpleHTTPRequestHandler.do_GET(self)
+
+    def log_happymessage(self, format, *args):
+        sys.stdout.write("%s - - [%s] %s\n" % (self.address_string(), self.log_date_time_string(), format%args))
+
+    def log_request(self, code='-', size='-'):
+        self.log_happymessage('"%s" %s %s', self.requestline, str(code), str(size))
 
 
 # noinspection PyBroadException
@@ -625,5 +632,16 @@ class Server(ThreadingMixIn, HTTPServer):
 
 
 if __name__ == "__main__":
-    log("Backup server running on %d, serving from %s" % (CONFIG['PORT'], os.path.abspath(os.curdir)))
-    Server(("", CONFIG['PORT'])).serve_forever()
+    log("Backup server running on %s:%d, serving from %s" % (CONFIG['INTERFACE'],CONFIG['PORT'], os.path.abspath(os.curdir)))
+    
+    if CONFIG['ALLOWED_APP_IDS']:
+        log("Allowing only app_ids: %s" % str(CONFIG['ALLOWED_APP_IDS']).strip('[]'))
+    else:
+        log("Allowing all app_ids")
+
+    if CONFIG['ALLOWED_MOD_IDS']:
+        log("Allowing only mod_ids: %s" % ", ".join(CONFIG['ALLOWED_MOD_IDS']))
+    else:
+        log("Allowing all mod_ids")
+
+    Server((CONFIG['INTERFACE'], CONFIG['PORT'])).serve_forever()
