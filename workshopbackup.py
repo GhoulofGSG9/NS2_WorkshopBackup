@@ -611,7 +611,7 @@ class Server(ThreadingMixIn, HTTPServer):
             return 404, self.RESULT_DENIED_NO_SUCH_MOD
 
         if not mod.allowed:
-            return 404, self.RESULT_DENIED_APP_ID
+            return 403, self.RESULT_DENIED_APP_ID
 
         if not mod.info_loaded:
             return 202, self.RESULT_DOWNLOADING
