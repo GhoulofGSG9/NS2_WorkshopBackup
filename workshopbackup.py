@@ -28,14 +28,15 @@ import time
 #
 # CONFIGURE BLOCK
 
-DEFAULTCONFIG = {  
-                   'ALLOWED_APP_IDS': [4920],  # list all allowed app ids to store. Empty = allow all
-                   'ALLOWED_MOD_IDS': [],  # list all allowed mod ids to store. Empty = allow all
-                   'INTERFACE': '0.0.0.0',  # interface to listen on. 0.0.0.0 = all
-                   'PORT': 27020,  # what port to listen to
-                   'MAX_OUTSTANDING_STEAM_DOWNLOAD_REQUESTS': 4, # number of downloads from steam we will have at the same time
-                   'VERSION_OVERLAP_WINDOW': 7 * 24 * 3600,  # How old the latest version must be before we remove older version (1 week in seconds)
-                   'LOG': True # turn on trace logging
+DEFAULTCONFIG = {
+    'ALLOWED_APP_IDS': [4920],  # list all allowed app ids to store. Empty = allow all
+    'ALLOWED_MOD_IDS': [],  # list all allowed mod ids to store. Empty = allow all
+    'INTERFACE': '0.0.0.0',  # interface to listen on. 0.0.0.0 = all
+    'PORT': 27020,  # what port to listen to
+    'MAX_OUTSTANDING_STEAM_DOWNLOAD_REQUESTS': 4,  # number of downloads from steam we will have at the same time
+    'VERSION_OVERLAP_WINDOW': 7 * 24 * 3600,
+    # How old the latest version must be before we remove older version (1 week in seconds)
+    'LOG': True  # turn on trace logging
 }
 
 CONFIG = {}
@@ -46,7 +47,7 @@ if os.path.exists(config_filename):
     with open(config_filename) as json_file:
         json_data = json.load(json_file)
         for i, v in DEFAULTCONFIG.items():
-            if json_data[i]:
+            if i in json_data:
                 CONFIG[i] = json_data[i]
             else:
                 CONFIG[i] = DEFAULTCONFIG[i]
@@ -522,7 +523,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
             SimpleHTTPRequestHandler.do_GET(self)
 
     def log_happymessage(self, format, *args):
-        sys.stdout.write("%s - - [%s] %s\n" % (self.address_string(), self.log_date_time_string(), format%args))
+        sys.stdout.write("%s - - [%s] %s\n" % (self.address_string(), self.log_date_time_string(), format % args))
 
     def log_request(self, code='-', size='-'):
         self.log_happymessage('"%s" %s %s', self.requestline, str(code), str(size))
@@ -632,8 +633,9 @@ class Server(ThreadingMixIn, HTTPServer):
 
 
 if __name__ == "__main__":
-    log("Backup server running on %s:%d, serving from %s" % (CONFIG['INTERFACE'],CONFIG['PORT'], os.path.abspath(os.curdir)))
-    
+    log("Backup server running on %s:%d, serving from %s" % (
+        CONFIG['INTERFACE'], CONFIG['PORT'], os.path.abspath(os.curdir)))
+
     if CONFIG['ALLOWED_APP_IDS']:
         log("Allowing only app_ids: %s" % str(CONFIG['ALLOWED_APP_IDS']).strip('[]'))
     else:
