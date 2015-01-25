@@ -24,6 +24,9 @@ Installing
 
 NS2:
 
+If the "mod_backup_servers" variable is not present in ServerConfig.json, start and
+stop the server, it should generate the default variables.
+
 In ServerConfig.json, set "mod_backup_servers" to the list of backup servers.
 
     "mod_backup_servers":[ "http://example.com:27020", "http://example2.com:27020" ],
@@ -36,7 +39,7 @@ during steam sales), you can change set the "mod_backup_before_steam" key to tru
 
 Backup server:
 
-Requires python 3+ (https://www.python.org/downloads/)
+Requires python 3.3+ (https://www.python.org/downloads/)
 
 Create a directory where you want the mods to be stored, place the
 workshopbackup.py file there. By default the server will run on port
