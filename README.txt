@@ -39,18 +39,19 @@ during steam sales), you can change set the "mod_backup_before_steam" key to tru
 
 Backup server:
 
-Requires python 3.3+ (https://www.python.org/downloads/)
+If you use the python script python 3.3+ (https://www.python.org/downloads/) is required!
 
 Create a directory where you want the mods to be stored, place the
-workshopbackup.py file there. By default the server will run on port
-27020, edit the PORT variable in the file if you would like it to
-be something else.
+workshopbackup.py or workshopbackup.exe file there. 
 
-Run it, making sure it runs with the mod-directory as its current
+Run it once to generate the config file. Make sure it runs with the mod-directory as its current
 directory.
 
+Edit the config file after your needs. For more details about the configuration look
+into the configuration section of this readme. And restart it.
+
 Also make sure it can be accessed through any firewalls - as it just uses
-the standard HTTP protocol, only TCP needs to be open on the PORT.
+the standard HTTP protocol, only TCP needs to be open on the given port.
 
 Test
 ----
@@ -63,7 +64,7 @@ You can test that it works by opening a browser and typing
 http://localhost:27020/m5f3f7c0_1348957670.zip
 
 Should get a 202 error message, refresh a few times and it
-should either return the zip file (or a 404 if the mod
+should either return the zip file (or a 403 if the mod
 has been updated).
 
 The corresponding .zip file should exist in the directory.
@@ -72,12 +73,25 @@ The corresponding .zip file should exist in the directory.
 Configuration
 -------------
 
-The server will only accept apps in the ALLOWED_APP_IDS list, by
-default set to 4920 (NS2).
+All config parameters can be found in the workshopbackup.json.
 
-By default, the server will service all mods for NS2; if you would
-like it to service only a limited set of mods, list them in the
-ALLOWED_MOD_IDS list.
++-----------------------------------------+---------------------------------------------------------------------------------+-----------------+
+| Name                                    | Description                                                                     | Default         |
++-----------------------------------------+---------------------------------------------------------------------------------+-----------------+
+| ALLOWED_APP_ID                          | List of allowed app ids to store mods from. Empty = allow all                   | [4920]          |
++-----------------------------------------+---------------------------------------------------------------------------------+-----------------+
+| ALLOWED_MOD_IDS                         | List all allowed mod ids to store. Empty = allow all                            | []              |
++-----------------------------------------+---------------------------------------------------------------------------------+-----------------+
+| INTERFACE                               | Interface to listen on. 0.0.0.0 = all                                           | 0.0.0.0         |
++-----------------------------------------+---------------------------------------------------------------------------------+-----------------+
+| PORT                                    | Port the server will listen to                                                  | 27020           |
++-----------------------------------------+---------------------------------------------------------------------------------+-----------------+
+| MAX_OUTSTANDING_STEAM_DOWNLOAD_REQUESTS | Maximum amount of downloads from steam the server will process at the same time | 4               |
++-----------------------------------------+---------------------------------------------------------------------------------+-----------------+
+| VERSION_OVERLAP_WINDOW                  | How long we preserve a outdated version of a mod in secs                        | 604800 (1 week) |
++-----------------------------------------+---------------------------------------------------------------------------------+-----------------+
+| LOG                                     | If True trace logging will be enabled                                           | true            |
++-----------------------------------------+---------------------------------------------------------------------------------+-----------------+
 
 Maintenance
 -----------
