@@ -25,6 +25,8 @@ import urllib.request
 import sys
 import time
 
+VERSION = "0.3"
+
 #
 # CONFIGURE BLOCK
 
@@ -141,7 +143,6 @@ class ModInfo(object):
             self.allowed = not CONFIG['ALLOWED_APP_IDS'] or self.app_id in CONFIG['ALLOWED_APP_IDS']
             self.info_loaded = True
 
-    # noinspection PyUnboundLocalVariable,PyUnresolvedReferences
     def init_from_json(self, node):
         self.id = int(node['publishedfileid'])
         result = int(node['result'])
@@ -150,13 +151,13 @@ class ModInfo(object):
             self.exists = False
         else:
             self.version = int(node['time_updated'])
-        self.title = node['title']
-        self.app_id = int(node['consumer_app_id'])
-        self.size = int(node['file_size'])
-        self.url = node['file_url']
-        self.exists = True
-        self.allowed = not CONFIG['ALLOWED_APP_IDS'] or self.app_id in CONFIG['ALLOWED_APP_IDS']
-        self.info_loaded = True
+            self.title = node['title']
+            self.app_id = int(node['consumer_app_id'])
+            self.size = int(node['file_size'])
+            self.url = node['file_url']
+            self.exists = True
+            self.allowed = not CONFIG['ALLOWED_APP_IDS'] or self.app_id in CONFIG['ALLOWED_APP_IDS']
+            self.info_loaded = True
 
     def is_downloaded(self):
         return os.path.exists(self.filename)
@@ -633,8 +634,8 @@ class Server(ThreadingMixIn, HTTPServer):
 
 
 if __name__ == "__main__":
-    log("Backup server running on %s:%d, serving from %s" % (
-        CONFIG['INTERFACE'], CONFIG['PORT'], os.path.abspath(os.curdir)))
+    log("Backup server (version: %s) running on %s:%d, serving from %s" % (
+        VERSION, CONFIG['INTERFACE'], CONFIG['PORT'], os.path.abspath(os.curdir)))
 
     if CONFIG['ALLOWED_APP_IDS']:
         log("Allowing only app_ids: %s" % str(CONFIG['ALLOWED_APP_IDS']).strip('[]'))
