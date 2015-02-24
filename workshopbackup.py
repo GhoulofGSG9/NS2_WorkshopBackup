@@ -25,7 +25,7 @@ import urllib.request
 import sys
 import time
 
-VERSION = "0.3"
+VERSION = "0.4"
 
 #
 # CONFIGURE BLOCK
