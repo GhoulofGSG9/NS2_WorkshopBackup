@@ -12,7 +12,6 @@
 # it is downloaded from steam
 #
 from datetime import datetime
-import glob
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import json
 from operator import attrgetter
@@ -230,6 +229,7 @@ class DownloadModInfoRequest(object):
 
         return result
 
+
 class Zipper(object):
     def __init__(self, mod):
         self.mod = mod
@@ -245,13 +245,13 @@ class Zipper(object):
             return
 
         tempfilename = "%s.zip.zipping" % self.mod
-        with ZipFile(tempfilename, "w", ZIP_DEFLATED) as zip:
+        with ZipFile(tempfilename, "w", ZIP_DEFLATED) as z:
             for root, dirs, files in os.walk(self.mod):
-                #NOTE: ignores empty directories
+                # NOTE: ignores empty directories
                 for fn in files:
                     absfn = os.path.join(root, fn)
-                    zfn = absfn[len(self.mod)+len(os.sep):] # relative path
-                    zip.write(absfn, zfn)
+                    zfn = absfn[len(self.mod) + len(os.sep):]  # relative path
+                    z.write(absfn, zfn)
 
         if os.path.exists(tempfilename):
             os.rename(tempfilename, "%s.zip" % self.mod)
@@ -480,8 +480,8 @@ class ModDatabase(ProducerThread):
                 self.mod_map[req.mod.key()] = req.mod
         self.completed_download_requests.clear()
 
-        while self.download_requests and len(self.active_download_request) < CONFIG[
-            'MAX_OUTSTANDING_STEAM_DOWNLOAD_REQUESTS']:
+        while self.download_requests and len(self.active_download_request) < \
+                CONFIG['MAX_OUTSTANDING_STEAM_DOWNLOAD_REQUESTS']:
             mod = self.download_requests.pop()
             if not mod.is_downloaded():
                 req = DownloadModRequest(self, mod)
@@ -519,25 +519,24 @@ class RequestHandler(SimpleHTTPRequestHandler):
         result = check_path(self.path)
         if result:
             mod_id, version = result
+            modtoken = "m%x_%d" % (mod_id, version)
+            filename = "%s.zip" % modtoken
             str_mod_id = str(hex(mod_id))[2:]
+
             if CONFIG['ALLOWED_MOD_IDS'] and not (str_mod_id in CONFIG['ALLOWED_MOD_IDS']):
                 log("Reject request for m%s_%d, mod %s not allowed" % (str_mod_id, version, str_mod_id))
                 self.send_error(403, Server.RESULT_DENIED_MOD_ID)
                 return False
-            # list all versions of the mod using the filesystem
-            expr = "m%x_*.zip" % mod_id
-            matches = glob.glob(expr)
-            versions = [int(m[:-4].split("_")[1]) for m in matches]
-            versions.sort()
-            if version in versions:
-                log("Found m%x_%d" % (mod_id, version))
+
+            # check for file
+            if os.path.isfile(filename):
+                log("Found %s" % filename)
                 return True
 
             # Check for folder with same name
-            modtoken = "m%x_%d" % (mod_id, version)
             if os.path.isdir(modtoken):
                 self.send_error(202, "Found mod folder, zipping it up now")
-                if not os.path.isfile("%s.zip.zipping" % modtoken ):
+                if not os.path.isfile("%s.zip.zipping" % modtoken):
                     zipper = Zipper(modtoken)
                     zipper.start()
                 return False
