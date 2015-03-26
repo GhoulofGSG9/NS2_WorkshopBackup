@@ -24,6 +24,7 @@ import urllib.request
 
 import sys
 import time
+from zipfile import ZIP_DEFLATED, ZipFile
 
 VERSION = "0.4"
 
@@ -228,6 +229,33 @@ class DownloadModInfoRequest(object):
                 result.append(ModInfo(json_node=file_node))
 
         return result
+
+class Zipper(object):
+    def __init__(self, mod):
+        self.mod = mod
+        self.thread = Thread(target=self.run, daemon=True)
+
+    def start(self):
+        self.thread.start()
+
+    def run(self):
+        log("zipping started for %s" % self.mod)
+        if not os.path.isdir(self.mod):
+            log("couldn't find %s folder anymore aborting zipping process!" % self.mod)
+            return
+
+        tempfilename = "%s.zip.zipping" % self.mod
+        with ZipFile(tempfilename, "w", ZIP_DEFLATED) as zip:
+            for root, dirs, files in os.walk(self.mod):
+                #NOTE: ignores empty directories
+                for fn in files:
+                    absfn = os.path.join(root, fn)
+                    zfn = absfn[len(self.mod)+len(os.sep):] # relative path
+                    zip.write(absfn, zfn)
+
+        if os.path.exists(tempfilename):
+            os.rename(tempfilename, "%s.zip" % self.mod)
+        log("zipping finished for %s" % self.mod)
 
 
 class DownloadModRequest(object):
@@ -504,6 +532,15 @@ class RequestHandler(SimpleHTTPRequestHandler):
             if version in versions:
                 log("Found m%x_%d" % (mod_id, version))
                 return True
+
+            # Check for folder with same name
+            modtoken = "m%x_%d" % (mod_id, version)
+            if os.path.isdir(modtoken):
+                self.send_error(202, "Found mod folder, zipping it up now")
+                if not os.path.isfile("%s.zip.zipping" % modtoken ):
+                    zipper = Zipper(modtoken)
+                    zipper.start()
+                return False
             # the version asked for does not exist, we need to add it to our requests
             status, result = self.server.add_mod_request(mod_id, version)
             if status != 200:
