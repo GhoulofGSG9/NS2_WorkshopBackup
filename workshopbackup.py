@@ -25,7 +25,7 @@ import sys
 import time
 from zipfile import ZIP_DEFLATED, ZipFile
 
-VERSION = "0.4"
+VERSION = "0.5"
 
 #
 # CONFIGURE BLOCK

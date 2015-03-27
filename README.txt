@@ -47,6 +47,8 @@ workshopbackup.py or workshopbackup.exe file there.
 Run it once to generate the config file. Make sure it runs with the mod-directory as its current
 directory.
 
+Existing mod folders will be automatically zipped by the backup server on demand.
+
 Edit the config file after your needs. For more details about the configuration look
 into the configuration section of this readme. And restart it.
 
@@ -156,8 +158,11 @@ If a file matching that pattern is present, it is served via the usual http-prot
 If the request does not match the pattern, it is 404'ed.
 
 If the request DOES match the pattern, but there is no such file, a 202 (request accepted,
-come back later) is returned and a request is sent to the steam-downloader part of
-the server.
+come back later) is returned.
+
+If a folder fitting the given mod token exists it will be zipped on demand.
+
+Otherwise a request is sent to the steam-downloader part of the server.
 
 The steam downloader will (in the background) try to download information about the
 given mod_id. Once steam answers, the response is analysed and stored away (persisted
