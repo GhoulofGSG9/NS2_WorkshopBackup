@@ -95,7 +95,7 @@ def now_millis():
 
 def handle_error(msg):
     error_type, error_msg, traceback = sys.exc_info()
-    log("Caught '%s(%s)' %s" % (error_type, error_msg, msg))
+    log("Caught '%s' %s" % (error_type, msg))
     sys.excepthook(error_type, error_msg, traceback)
 
 
@@ -351,16 +351,16 @@ class SteamInfoDownloader(ProducerThread):
                 for mod in mods:
                     self.mod_database.info_completed(mod)
                     self.requests.discard(mod.id)
+
+                with self.condition:
+                    self.incomingRequests.extend(self.requests)
+
             except urllib.error.URLError as e:
                 print(e.reason)
             except:
-                handle_error(' when downloading details for %s' % self.requests)
-
-            with self.condition:
-                self.incomingRequests.extend(self.requests)
+                log('error when downloading details for %s' % self.requests)
 
             self.requests.clear()
-
 
 class ModDatabase(ProducerThread):
     # as we keep a record of both known good mods to backup and requests for mods we don't backup, we need to ensure
@@ -590,7 +590,7 @@ def move_to_old(base, ext):
 class Logger(object):
     def __init__(self, filename, std):
         self.terminal = std
-        self.log = open(filename, "wt", buffering=1)
+        self.log = open(filename, "wt", buffering=1, encoding='utf-8')
 
     def write(self, message):
         self.terminal.write(message)
