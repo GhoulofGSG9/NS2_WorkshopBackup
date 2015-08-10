@@ -33,6 +33,7 @@ VERSION = "0.5"
 DEFAULTCONFIG = {
     'ALLOWED_APP_IDS': [4920],  # list all allowed app ids to store. Empty = allow all
     'ALLOWED_MOD_IDS': [],  # list all allowed mod ids to store. Empty = allow all
+    'DISALLOWED_MOD_IDS': [],  # list all disallowed mod ids to store. Empty = allow all
     'INTERFACE': '0.0.0.0',  # interface to listen on. 0.0.0.0 = all
     'PORT': 27020,  # what port to listen to
     'MAX_OUTSTANDING_STEAM_DOWNLOAD_REQUESTS': 4,  # number of downloads from steam we will have at the same time
@@ -316,6 +317,7 @@ class SteamInfoDownloader(ProducerThread):
         super().__init__()
         self.mod_database = mod_database
         self.incomingRequests = []
+        self.corruptedRequest = []
         self.requests = set()
 
     def add_requests(self, requests):
@@ -528,6 +530,11 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 self.send_error(403, Server.RESULT_DENIED_MOD_ID)
                 return False
 
+            if CONFIG['DISALLOWED_MOD_IDS'] and str_mod_id in CONFIG['DISALLOWED_MOD_IDS']:
+                log("Reject request for m%s_%d, mod %s not allowed" % (str_mod_id, version, str_mod_id))
+                self.send_error(403, Server.RESULT_DENIED_MOD_ID)
+                return False
+
             # check for file
             if os.path.isfile(filename):
                 log("Found %s" % filename)
@@ -540,13 +547,16 @@ class RequestHandler(SimpleHTTPRequestHandler):
                     zipper = Zipper(modtoken)
                     zipper.start()
                 return False
+
             # the version asked for does not exist, we need to add it to our requests
             status, result = self.server.add_mod_request(mod_id, version)
             if status != 200:
                 self.send_error(status, result)
                 return False
+
             # asking for it made it available somehow
             return True
+
         log("failed check_path")
         self.send_error(404, "Request not on the correct format")
         return False
