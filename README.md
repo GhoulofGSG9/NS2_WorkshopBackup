@@ -1,13 +1,11 @@
-======================
-Steam WorkshopBackup for NS2
-======================
+# Steam Workshop Backup Server for Natural Selection 2
 
-The WorkshopBackup server ensures that NS2 clients will be able to download
+The Workshop Backup Server ensures that Natural Selection 2 clients will be able to download
 a server-side mod even when Steam is acting up OR when the server is running
 an out-dated version of a mod.
 
 Its intended use is to make it simple for anyone to host a steam backup server
-for their own or others servers.
+for their own or others game servers.
 
 To support "swapping" backups between groups of server ops, multiple backup
 servers can be listed - as clients accesses the servers in a random order, load
@@ -19,10 +17,9 @@ from client requests and missing mods are automatically downloaded from steam.
 As the server is written in plain python and just extends / restricts the
 standard python webserver, it should be easy to verify that it is safe to run.
 
-Installing
-----------
+## Setup
 
-NS2:
+### NS2
 
 If the "mod_backup_servers" variable is not present in ServerConfig.json, start and
 stop the server, it should generate the default variables.
@@ -37,66 +34,51 @@ during steam sales), you can change set the "mod_backup_before_steam" key to tru
 
    "mod_backup_before_steam":true,
 
-Backup server:
+### Backup server
 
-If you use the python script python 3.3+ (https://www.python.org/downloads/) is required!
+If you use the python script python 3.4+ (https://www.python.org/downloads/) is required!
 
-Create a directory where you want the mods to be stored, place the
-workshopbackup.py or workshopbackup.exe file there. 
+Copy and paste the workshopbackup.py or workshopbackup.exe file into your game servers Workshop directory. 
+Existing mod folders will be automatically zipped by the backup server on demand. 
 
-Run it once to generate the config file. Make sure it runs with the mod-directory as its current
-directory.
+Run it once to generate the config file. 
 
-Existing mod folders will be automatically zipped by the backup server on demand.
-
-Edit the config file after your needs. For more details about the configuration look
+Edit the config file after your needs. You will have to at least add a steamworks web api key. For more details about the configuration look
 into the configuration section of this readme. And restart it.
 
 Also make sure it can be accessed through any firewalls - as it just uses
 the standard HTTP protocol, only TCP needs to be open on the given port.
 
-Test
-----
+## Test
+You can test the workshop backup server locally via e.g http://localhost:27020/m5f3f7c0_1348957670.zip
 
-You should immediately see a log.txt and a log-err.txt appear in
-the directory.
+Change the URL and port accordingly to your configuration.
 
-You can test that it works by opening a browser and typing
-
-http://localhost:27020/m5f3f7c0_1348957670.zip
-
-Should get a 202 error message, refresh a few times and it
+The server should respond with 202 error message, refresh it a few times and it
 should either return the zip file (or a 403 if the mod
 has been updated).
 
 The corresponding .zip file should exist in the directory.
 
 
-Configuration
--------------
+## Configuration
 
 All config parameters can be found in the workshopbackup.json.
 
-+-----------------------------------------+---------------------------------------------------------------------------------+-----------------+
 | Name                                    | Description                                                                     | Default         |
-+-----------------------------------------+---------------------------------------------------------------------------------+-----------------+
+|-----------------------------------------|---------------------------------------------------------------------------------|-----------------|
 | ALLOWED_APP_ID                          | List of allowed app ids to store mods from. Empty = allow all                   | [4920]          |
-+-----------------------------------------+---------------------------------------------------------------------------------+-----------------+
 | ALLOWED_MOD_IDS                         | List all allowed mod ids to store. Empty = allow all                            | []              |
-+-----------------------------------------+---------------------------------------------------------------------------------+-----------------+
+| DISALLOWED_MOD_IDS                      | List all disallowed mod ids to store. Empty = allow all                         | []              |
 | INTERFACE                               | Interface to listen on. 0.0.0.0 = all                                           | 0.0.0.0         |
-+-----------------------------------------+---------------------------------------------------------------------------------+-----------------+
 | PORT                                    | Port the server will listen to                                                  | 27020           |
-+-----------------------------------------+---------------------------------------------------------------------------------+-----------------+
 | MAX_OUTSTANDING_STEAM_DOWNLOAD_REQUESTS | Maximum amount of downloads from steam the server will process at the same time | 4               |
-+-----------------------------------------+---------------------------------------------------------------------------------+-----------------+
 | VERSION_OVERLAP_WINDOW                  | How long we preserve a outdated version of a mod in secs                        | 604800 (1 week) |
-+-----------------------------------------+---------------------------------------------------------------------------------+-----------------+
-| LOG                                     | If True trace logging will be enabled                                           | true            |
-+-----------------------------------------+---------------------------------------------------------------------------------+-----------------+
+| LOG                                     | If True trace logging will be enabled                                           | false           |
+| API_URL                                 | The Steamworks API url just for fetching the workshop mod details               | https://api.steampowered.com/IPublishedFileService/GetDetails/v1/ |
+| API_KEY                                 | The Web API key used for the Steamworks api requests, visit https://steamcommunity.com/dev/apikey to generate your own steamworks api key. | Not set by default |
 
-Maintenance
------------
+## Maintenance
 
 The server should require zero maintenance, apart from possibly
 restarting the server every 6 month or so just to truncate the
@@ -117,8 +99,7 @@ uses anymore.
 
 The log-err.txt contains both errors and a record of all download requests.
 
-Expected resource usage
------------------------
+## Expected resource usage
 
 The server should be very resource-conservative. As it will only serve server-side mods,
 and clients will only connect to the server if they don't have the mod already, the only
@@ -130,9 +111,7 @@ time it will see significant use is
 Note that while most mods weighs in at the few-kb size, maps range in size from 5 to 50Mb.
 
 
-==========
-Background
-==========
+## Background
 
 That Steam servers serving up mods gets overloaded whenever there are Steam
 sales is an unfortunate fact of life. Even during normal days, attempts to
@@ -147,8 +126,7 @@ How long the server will run with an outdated version may vary - while it
 checks every map change, if steam is acting up it may be upto several hours
 before the server actually manages to download the new version.
 
-Solution
---------
+### Solution
 
 The server acts as a very restricted web server. It ONLY services requests
 for files whose pattern is "/m{mod-id-in-hex}_{timestamp/version-in-decimal}.zip".

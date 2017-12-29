@@ -25,7 +25,7 @@ import sys
 import time
 from zipfile import ZIP_DEFLATED, ZipFile
 
-VERSION = "0.5"
+VERSION = "0.5.2"
 
 #
 # CONFIGURE BLOCK
@@ -39,7 +39,11 @@ DEFAULTCONFIG = {
     'MAX_OUTSTANDING_STEAM_DOWNLOAD_REQUESTS': 4,  # number of downloads from steam we will have at the same time
     'VERSION_OVERLAP_WINDOW': 7 * 24 * 3600,
     # How old the latest version must be before we remove older version (1 week in seconds)
-    'LOG': True  # turn on trace logging
+    'LOG': True,  # turn on trace logging
+    'API_URL': 'https://api.steampowered.com/IPublishedFileService/GetDetails/v1/',
+    # URL for fetching the mod details from the steamworks api
+    'API_KEY': '',
+    # api key used for all api requests, visit https://steamcommunity.com/dev/apikey to generate your own steamworks api key.
 }
 
 CONFIG = {}
@@ -58,7 +62,7 @@ else:
     CONFIG = DEFAULTCONFIG
 
 with open(config_filename, 'w') as f:
-    f.write(json.dumps(CONFIG))
+    f.write(json.dumps(CONFIG, indent=4))
 
 # END CONFIGURE BLOCK
 #
@@ -137,7 +141,7 @@ class ModInfo(object):
         else:
             self.version = int(node.findtext('time_updated'))
             self.title = node.findtext('title')
-            self.app_id = int(node.findtext('consumer_app_id'))
+            self.app_id = int(node.findtext('consumer_app_id') or node.findtext('consumer_appid'))
             self.size = int(node.findtext('file_size'))
             self.url = node.findtext('file_url')
             self.exists = True
@@ -153,7 +157,7 @@ class ModInfo(object):
         else:
             self.version = int(node['time_updated'])
             self.title = node['title']
-            self.app_id = int(node['consumer_app_id'])
+            self.app_id = int(node['consumer_app_id'] or node['consumer_appid'])
             self.size = int(node['file_size'])
             self.url = node['file_url']
             self.exists = True
@@ -207,7 +211,7 @@ class ModDetailEncoder(json.JSONEncoder):
 
 class DownloadModInfoRequest(object):
     """Wraps a download info from steam request"""
-    detailsUrl = "http://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/"
+    detailsUrl = CONFIG['API_URL']
 
     def __init__(self, ids):
         self.mod_ids = ids
@@ -216,6 +220,10 @@ class DownloadModInfoRequest(object):
         log("info request started for %s" % ["m%x" % id for id in self.mod_ids])
         result = []
         raw_args = []
+
+        if CONFIG['API_KEY'] != '':
+            raw_args.append(("key", CONFIG['API_KEY']))
+
         for index, id in enumerate(self.mod_ids):
             raw_args.append(("publishedfileids[%d]" % index, str(id)))
         raw_args.append(("itemcount", str(len(self.mod_ids))))
@@ -361,6 +369,7 @@ class SteamInfoDownloader(ProducerThread):
                 log('error when downloading details for %s' % self.requests)
 
             self.requests.clear()
+
 
 class ModDatabase(ProducerThread):
     # as we keep a record of both known good mods to backup and requests for mods we don't backup, we need to ensure
