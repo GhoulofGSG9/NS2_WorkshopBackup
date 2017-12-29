@@ -235,10 +235,13 @@ class DownloadModInfoRequest(object):
         raw_args.append(("itemcount", str(len(self.mod_ids))))
 
         request = requests.get(self.detailsUrl, params=raw_args)
-        json_data = request.json()
-        if json_data['response'] and json_data['response']['publishedfiledetails']:
-            for file_node in json_data['response']['publishedfiledetails']:
-                result.append(ModInfo(json_node=file_node))
+        if request.status_code == 200:
+            json_data = request.json()
+            if json_data['response'] and json_data['response']['publishedfiledetails']:
+                for file_node in json_data['response']['publishedfiledetails']:
+                    result.append(ModInfo(json_node=file_node))
+        else:
+            log("Failed to fetch mod details from the steamworks api. Response code: %s" % request.status_code)
 
         return result
 
