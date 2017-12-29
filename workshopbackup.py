@@ -19,13 +19,13 @@ import os
 import shutil
 from socketserver import ThreadingMixIn
 from threading import Thread, Condition
-import urllib.request
+import requests
 
 import sys
 import time
 from zipfile import ZIP_DEFLATED, ZipFile
 
-VERSION = "0.5.2"
+VERSION = "0.5.3"
 
 #
 # CONFIGURE BLOCK
@@ -39,7 +39,7 @@ DEFAULTCONFIG = {
     'MAX_OUTSTANDING_STEAM_DOWNLOAD_REQUESTS': 4,  # number of downloads from steam we will have at the same time
     'VERSION_OVERLAP_WINDOW': 7 * 24 * 3600,
     # How old the latest version must be before we remove older version (1 week in seconds)
-    'LOG': True,  # turn on trace logging
+    'LOG': False,  # turn on trace logging
     'API_URL': 'https://api.steampowered.com/IPublishedFileService/GetDetails/v1/',
     # URL for fetching the mod details from the steamworks api
     'API_KEY': '',
@@ -157,7 +157,10 @@ class ModInfo(object):
         else:
             self.version = int(node['time_updated'])
             self.title = node['title']
-            self.app_id = int(node['consumer_app_id'] or node['consumer_appid'])
+            if 'consumer_app_id' in node:
+                self.app_id = int(node['consumer_app_id'])
+            else:
+                self.app_id = int(node['consumer_appid'])
             self.size = int(node['file_size'])
             self.url = node['file_url']
             self.exists = True
@@ -190,9 +193,12 @@ class ModInfo(object):
             # someone else is already trying to download it .. just warn and overwrite it...
             log("%s already exists?" % temp_filename)
         try:
-            response = urllib.request.urlretrieve(self.url, temp_filename)
+            request = requests.get(self.url)
+            with open(temp_filename, 'wb') as fd:
+                for chunk in request.iter_content(chunk_size=128):
+                    fd.write(chunk)
             os.rename(temp_filename, self.filename)
-            return response
+            return request.status_code
         finally:
             if os.path.exists(temp_filename):
                 os.remove(temp_filename)
@@ -228,10 +234,8 @@ class DownloadModInfoRequest(object):
             raw_args.append(("publishedfileids[%d]" % index, str(id)))
         raw_args.append(("itemcount", str(len(self.mod_ids))))
 
-        # noinspection PyUnresolvedReferences
-        args = urllib.parse.urlencode(raw_args)
-        request = urllib.request.urlopen(self.detailsUrl, args.encode("us-ascii"), timeout)
-        json_data = json.loads(request.read().decode("utf-8"))
+        request = requests.get(self.detailsUrl, params=raw_args)
+        json_data = request.json()
         if json_data['response'] and json_data['response']['publishedfiledetails']:
             for file_node in json_data['response']['publishedfiledetails']:
                 result.append(ModInfo(json_node=file_node))
