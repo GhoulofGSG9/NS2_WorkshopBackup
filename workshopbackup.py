@@ -20,6 +20,7 @@ import shutil
 from socketserver import ThreadingMixIn
 from threading import Thread, Condition
 import requests
+import urllib
 
 import sys
 import time
@@ -74,9 +75,13 @@ def log(msg):
 
 
 def check_path(path):
-    if not path.startswith("/m"):
-        return False
+    if path.startswith("/m"):
     path = path[2:]
+    elif path.startswith("//m"):
+        path = path[3:]
+    else:
+        return False
+
     parts = path.split(".")
     if len(parts) != 2 or parts[1] != "zip":
         return False
@@ -99,7 +104,7 @@ def now_millis():
 
 def handle_error(msg):
     error_type, error_msg, traceback = sys.exc_info()
-    log("Caught '%s' %s" % (error_type, msg))
+    log("caught error '%s' %s" % (error_type, msg))
     sys.excepthook(error_type, error_msg, traceback)
 
 
@@ -128,7 +133,7 @@ class ModInfo(object):
             self.version = version
 
         self.filename = 'm%x_%d.zip' % (self.id, self.version)
-        log("Created %s" % self.tostring())
+        log("created %s" % self.tostring())
 
     def __str__(self):
         return "mod[%x_%d]=%s" % (self.id, self.version, self.title)
@@ -229,6 +234,8 @@ class DownloadModInfoRequest(object):
 
         if CONFIG['API_KEY'] != '':
             raw_args.append(("key", CONFIG['API_KEY']))
+        else:
+            log("warning: API_KEY is not set!")
 
         for index, id in enumerate(self.mod_ids):
             raw_args.append(("publishedfileids[%d]" % index, str(id)))
@@ -241,12 +248,13 @@ class DownloadModInfoRequest(object):
                 for file_node in json_data['response']['publishedfiledetails']:
                     result.append(ModInfo(json_node=file_node))
         else:
-            log("Failed to fetch mod details from the steamworks api. Response code: %s" % request.status_code)
+            log("failed to fetch mod details from the steamworks api. Response code: %s" % request.status_code)
 
         return result
 
 
 class Zipper(object):
+    """Zips existing mod folders, usefull when the backup server is run from inside a game servers workshop folder"""
     def __init__(self, mod):
         self.mod = mod
         self.thread = Thread(target=self.run, daemon=True)
@@ -373,7 +381,7 @@ class SteamInfoDownloader(ProducerThread):
             except urllib.error.URLError as e:
                 print(e.reason)
             except:
-                log('error when downloading details for %s' % self.requests)
+                log('failed to downloading details for %s' % self.requests)
 
             self.requests.clear()
 
@@ -542,12 +550,12 @@ class RequestHandler(SimpleHTTPRequestHandler):
             str_mod_id = str(hex(mod_id))[2:]
 
             if CONFIG['ALLOWED_MOD_IDS'] and not (str_mod_id in CONFIG['ALLOWED_MOD_IDS']):
-                log("Reject request for m%s_%d, mod %s not allowed" % (str_mod_id, version, str_mod_id))
+                log("reject request for m%s_%d, mod %s not allowed" % (str_mod_id, version, str_mod_id))
                 self.send_error(403, Server.RESULT_DENIED_MOD_ID)
                 return False
 
             if CONFIG['DISALLOWED_MOD_IDS'] and str_mod_id in CONFIG['DISALLOWED_MOD_IDS']:
-                log("Reject request for m%s_%d, mod %s not allowed" % (str_mod_id, version, str_mod_id))
+                log("reject request for m%s_%d, mod %s not allowed" % (str_mod_id, version, str_mod_id))
                 self.send_error(403, Server.RESULT_DENIED_MOD_ID)
                 return False
 
