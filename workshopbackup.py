@@ -35,6 +35,8 @@ DEFAULTCONFIG = {
     'ALLOWED_APP_IDS': [4920],  # list all allowed app ids to store. Empty = allow all
     'ALLOWED_MOD_IDS': [],  # list all allowed mod ids to store. Empty = allow all
     'DISALLOWED_MOD_IDS': [],  # list all disallowed mod ids to store. Empty = allow all
+    'MONITOR_MOD_IDS': [], # list of mod ids to monitor (make sure we always have the last version)
+    'MONITOR_INTERVAL': 600, # intervl in seconds at which we check the monitored mods
     'INTERFACE': '0.0.0.0',  # interface to listen on. 0.0.0.0 = all
     'PORT': 27020,  # what port to listen to
     'MAX_OUTSTANDING_STEAM_DOWNLOAD_REQUESTS': 4,  # number of downloads from steam we will have at the same time
@@ -385,6 +387,28 @@ class SteamInfoDownloader(ProducerThread):
 
             self.requests.clear()
 
+class ModsMonitor(ProducerThread):
+    """Monitors the in the config specified mods for updates
+    making sure the backup server always has the last version downloaded"""
+
+    def __init__(self, mod_database):
+        super().__init__()
+        self.mod_database = mod_database
+
+        """Convert modids hex strings into ints"""
+        self.mod_ids = []
+        for mod_id in CONFIG['MONITOR_MOD_IDS']:
+            self.mod_ids.append(int(mod_id, 16))
+
+        self.__nextRun = 0
+
+    def flush(self):
+        log("checking mods %s for updates" % ["m%x" % id for id in self.mod_ids])
+        self.mod_database.request_mods(self.mod_ids)
+        self.__nextRun = time.time() + CONFIG['MONITOR_INTERVAL']
+
+    def something_todo(self):
+        return self.__nextRun < time.time()
 
 class ModDatabase(ProducerThread):
     # as we keep a record of both known good mods to backup and requests for mods we don't backup, we need to ensure
@@ -408,13 +432,26 @@ class ModDatabase(ProducerThread):
         self.steam_downloader = SteamInfoDownloader(self)
         self.steam_downloader_thread = Thread(target=self.steam_downloader.run, daemon=True)
 
+        self.run_mods_monitor = len(CONFIG['MONITOR_MOD_IDS']) > 0
+        if self.run_mods_monitor:
+            self.mods_monitor = ModsMonitor(self)
+            self.mods_monitor_thread = Thread(target=self.mods_monitor.run, daemon=True)
+
     def start(self):
         self.steam_downloader_thread.start()
         self.thread.start()
 
+        if self.run_mods_monitor:
+            self.mods_monitor_thread.start()
+
     def shutdown(self):
         self.steam_downloader.shutdown()
         self.steam_downloader_thread.join()
+
+        if self.run_mods_monitor:
+            self.mods_monitor_thread.shutdown()
+            self.mods_monitor_thread.join()
+
         ProducerThread.shutdown(self)
 
     def something_todo(self):
