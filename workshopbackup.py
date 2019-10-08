@@ -26,7 +26,7 @@ import sys
 import time
 from zipfile import ZIP_DEFLATED, ZipFile
 
-VERSION = "0.5.3"
+VERSION = "0.6.0"
 
 #
 # CONFIGURE BLOCK
@@ -36,7 +36,7 @@ DEFAULTCONFIG = {
     'ALLOWED_MOD_IDS': [],  # list all allowed mod ids to store. Empty = allow all
     'DISALLOWED_MOD_IDS': [],  # list all disallowed mod ids to store. Empty = allow all
     'MONITOR_MOD_IDS': [], # list of mod ids to monitor (make sure we always have the last version)
-    'MONITOR_INTERVAL': 600, # intervl in seconds at which we check the monitored mods
+    'MONITOR_INTERVAL': 600, # interval in seconds at which we check the monitored mods
     'INTERFACE': '0.0.0.0',  # interface to listen on. 0.0.0.0 = all
     'PORT': 27020,  # what port to listen to
     'MAX_OUTSTANDING_STEAM_DOWNLOAD_REQUESTS': 4,  # number of downloads from steam we will have at the same time
@@ -78,7 +78,7 @@ def log(msg):
 
 def check_path(path):
     if path.startswith("/m"):
-    path = path[2:]
+        path = path[2:]
     elif path.startswith("//m"):
         path = path[3:]
     else:

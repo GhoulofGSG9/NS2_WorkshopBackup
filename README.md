@@ -43,7 +43,7 @@ Existing mod folders will be automatically zipped by the backup server on demand
 
 Run it once to generate the config file. 
 
-Edit the config file after your needs. You will have to at least add a steamworks web api key. For more details about the configuration look
+Edit the config file after your needs. **You will have to at least add a steamworks web api key**. For more details about the configuration look
 into the configuration section of this readme. And restart it.
 
 Also make sure it can be accessed through any firewalls - as it just uses
@@ -70,6 +70,8 @@ All config parameters can be found in the workshopbackup.json.
 | ALLOWED_APP_ID                          | List of allowed app ids to store mods from. Empty = allow all                   | [4920]          |
 | ALLOWED_MOD_IDS                         | List all allowed mod ids to store. Empty = allow all                            | []              |
 | DISALLOWED_MOD_IDS                      | List all disallowed mod ids to store. Empty = allow all                         | []              |
+| MONITOR_MOD_IDS                         | List of mod ids to monitor to make sure theserve has the most recent version available | []              |
+| MONITOR_INTERVAL                        | Interval in seconds at which we check given mods for updates                    | []              |
 | INTERFACE                               | Interface to listen on. 0.0.0.0 = all                                           | 0.0.0.0         |
 | PORT                                    | Port the server will listen to                                                  | 27020           |
 | MAX_OUTSTANDING_STEAM_DOWNLOAD_REQUESTS | Maximum amount of downloads from steam the server will process at the same time | 4               |
