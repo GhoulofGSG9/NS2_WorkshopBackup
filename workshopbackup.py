@@ -241,8 +241,6 @@ class DownloadModInfoRequest(object):
 
         if CONFIG['API_KEY'] != '':
             raw_args.append(("key", CONFIG['API_KEY']))
-        else:
-            log("warning: API_KEY is not set!")
 
         for index, id in enumerate(self.mod_ids):
             raw_args.append(("publishedfileids[%d]" % index, str(id)))
@@ -750,17 +748,20 @@ class Server(ThreadingMixIn, HTTPServer):
 
 
 if __name__ == "__main__":
-    log("Backup server (version: %s) running on %s:%d, serving from %s" % (
+    print("Backup server (version: %s) running on %s:%d, serving from %s" % (
         VERSION, CONFIG['INTERFACE'], CONFIG['PORT'], os.path.abspath(os.curdir)))
 
     if CONFIG['ALLOWED_APP_IDS']:
-        log("Allowing only app_ids: %s" % str(CONFIG['ALLOWED_APP_IDS']).strip('[]'))
+        print("Allowing only app_ids: %s" % str(CONFIG['ALLOWED_APP_IDS']).strip('[]'))
     else:
-        log("Allowing all app_ids")
+        print("Allowing all app_ids")
 
     if CONFIG['ALLOWED_MOD_IDS']:
-        log("Allowing only mod_ids: %s" % ", ".join(CONFIG['ALLOWED_MOD_IDS']))
+        print("Allowing only mod_ids: %s" % ", ".join(CONFIG['ALLOWED_MOD_IDS']))
     else:
-        log("Allowing all mod_ids")
+        print("Allowing all mod_ids")
+
+    if CONFIG['API_KEY'] == '' and CONFIG['API_URL'] == 'https://api.steampowered.com/IPublishedFileService/GetDetails/v1/':
+        print("Warning: API_KEY config value not set! Server won't be able to download any mod details!")
 
     Server((CONFIG['INTERFACE'], CONFIG['PORT'])).serve_forever()
