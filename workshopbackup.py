@@ -19,12 +19,17 @@ import os
 import shutil
 from socketserver import ThreadingMixIn
 from threading import Thread, Condition
-import requests
 import urllib
-
 import sys
 import time
 from zipfile import ZIP_DEFLATED, ZipFile
+
+try:
+    import requests
+except ImportError:
+    print("Please install or update the Requests module.")
+    print("You can do so by running 'pip install requests' in your console")
+    sys.exit(1)
 
 VERSION = "0.6.0"
 
