@@ -31,7 +31,7 @@ except ImportError:
     print("You can do so by running 'pip install requests' in your console")
     sys.exit(1)
 
-VERSION = "0.6.0"
+VERSION = "0.6.1"
 
 #
 # CONFIGURE BLOCK
