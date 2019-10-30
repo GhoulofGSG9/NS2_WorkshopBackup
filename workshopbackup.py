@@ -271,6 +271,10 @@ class Zipper(object):
             return
 
         tempfilename = "%s.zip.zipping" % self.mod
+        if os.path.exists(tempfilename):
+            log("%s is allready getting zipped aborting zipping process!" % self.mod)
+            return
+
         with ZipFile(tempfilename, "w", ZIP_DEFLATED) as z:
             for root, dirs, files in os.walk(self.mod):
                 # NOTE: ignores empty directories
