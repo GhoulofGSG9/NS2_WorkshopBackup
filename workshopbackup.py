@@ -761,6 +761,9 @@ if __name__ == "__main__":
     else:
         print("Allowing all mod_ids")
 
+    if CONFIG['MONITOR_MOD_IDS']:
+        print("Monitoring mod_ids: %s" % ", ".join(CONFIG['MONITOR_MOD_IDS']))
+
     if CONFIG['API_KEY'] == '' and CONFIG['API_URL'] == 'https://api.steampowered.com/IPublishedFileService/GetDetails/v1/':
         print("Warning: API_KEY config value not set! Server won't be able to download any mod details!")
 
