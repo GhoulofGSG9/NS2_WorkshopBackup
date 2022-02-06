@@ -1,10 +1,19 @@
+# Note: No UGC support!
+With version 340 Natural Selection 2 started using the UGC workshop system instead of the old legacy workshop.
+UGC doesn't offer a public REST API to download items, so this workshop backup server doesn't work for any UGC mod.
+
+It's recommended to use the new built-in mod backup web server of the dedicated game server. 
+It can be enable by adding `-startmodserver` to the server's start parameters. By default the built-in backup server listen to gameport + 2. That can be changed via the start parameter `-modserverport`. It can also be bound to an external ip via the parameter `-modserveraddress`. 
+
+For more details see the Mod System Changes section of the [Update 340 changelog](https://store.steampowered.com/news/app/4920/view/5917165051353982118).
+
 # Steam Workshop Backup Server for Natural Selection 2
 
 The Workshop Backup Server ensures that Natural Selection 2 clients will be able to download
 a server-side mod even when Steam is acting up OR when the server is running
 an out-dated version of a mod.
 
-Its intended use is to make it simple for anyone to host a steam backup server
+It's intended use is to make it simple for anyone to host a steam backup server
 for their own or others game servers.
 
 To support "swapping" backups between groups of server ops, multiple backup
